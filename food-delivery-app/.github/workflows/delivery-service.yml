@@ -1,0 +1,49 @@
+name: Delivery Service CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'delivery-service/**'
+      - '.github/workflows/delivery-service.yml'
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: delivery-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: delivery-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:${{ github.sha }} .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/delivery-service:${{ github.sha }}
+
+      - name: Deploy to cloud
+        run: |
+          # Placeholder: add cloud deployment commands here
+          echo "Deploy step placeholder for delivery-service"
