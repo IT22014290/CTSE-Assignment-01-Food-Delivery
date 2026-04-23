@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "food-delivery-app/delivery-service/**"
+      - "delivery-service/**"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -29,7 +29,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.ECR_REGISTRY }}/food-delivery-delivery:latest ./food-delivery-app/delivery-service
+        run: docker build -t ${{ secrets.ECR_REGISTRY }}/food-delivery-delivery:latest ./delivery-service
 
       - name: Push to ECR
         run: docker push ${{ secrets.ECR_REGISTRY }}/food-delivery-delivery:latest
@@ -45,7 +45,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
         with:
-          projectBaseDir: food-delivery-app/delivery-service
+          projectBaseDir: delivery-service
           args: -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
