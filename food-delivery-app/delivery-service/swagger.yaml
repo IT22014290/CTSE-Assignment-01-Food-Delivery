@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Delivery Service API
+  description: |
+    Manages driver assignment and real-time GPS tracking.
+    When a driver updates their location with `picked_up` or `delivered` status,
+    this service calls Order Service to advance the order status accordingly.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3004
+    description: Local development
+  - url: http://localhost/api/delivery
+    description: Via Nginx API Gateway (local)
+
+tags:
+  - name: Delivery
+    description: Driver assignment and GPS tracking
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: object
+        message:
+          type: string
+
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+          example: 6.9271
+        longitude:
+          type: number
+          format: float
+          example: 79.8612
+        updatedAt:
+          type: string
+          format: date-time
+
+    Delivery:
+      type: object
+      properties:
+        _id:
+          type: string
+        orderId:
+          type: string
+        driverId:
+          type: string
+        status:
+          type: string
+          enum: [assigned, picked_up, in_transit, delivered]
+          example: assigned
+        currentLocation:
+          $ref: '#/components/schemas/Location'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AssignRequest:
+      type: object
+      required: [orderId, driverId]
+      properties:
+        orderId:
+          type: string
+          example: "64f1a2b3c4d5e6f7a8b9c0d1"
+        driverId:
+          type: string
+          example: "64f1a2b3c4d5e6f7a8b9c0d2"
+
+    UpdateLocationRequest:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          example: 6.9271
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          example: 79.8612
+        status:
+          type: string
+          enum: [picked_up, in_transit, delivered]
+          description: Optionally advance the delivery status. `picked_up` and `delivered` also update Order Service.
+
+paths:
+  /health:
+    get:
+      tags: [Delivery]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /delivery/assign:
+    post:
+      tags: [Delivery]
+      summary: Assign a driver to an order
+      description: Requires `admin` role.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRequest'
+      responses:
+        '201':
+          description: Driver assigned
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Delivery'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden – admin only
+        '409':
+          description: Order already has a driver assigned
+
+  /delivery/driver/active:
+    get:
+      tags: [Delivery]
+      summary: Get active deliveries for the authenticated driver
+      description: Requires `delivery_driver` role. Returns deliveries with status `assigned`, `picked_up`, or `in_transit`.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active deliveries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Delivery'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /delivery/{orderId}:
+    get:
+      tags: [Delivery]
+      summary: Get delivery tracking for an order
+      description: Public endpoint – used by customers on the tracking page to see driver GPS.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delivery tracking info
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Delivery'
+        '404':
+          description: Delivery record not found
+
+  /delivery/{orderId}/location:
+    put:
+      tags: [Delivery]
+      summary: Update driver GPS location (and optionally delivery status)
+      description: |
+        Requires `delivery_driver` role.
+        Setting `status: "picked_up"` or `status: "delivered"` also calls Order Service
+        to advance the order status automatically.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+      responses:
+        '200':
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Delivery'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Active delivery not found for this driver and order
