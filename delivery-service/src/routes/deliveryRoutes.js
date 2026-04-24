@@ -84,7 +84,21 @@ router.get(
       const assignedOrderIds = await Delivery.distinct('orderId');
       const assignedSet = new Set(assignedOrderIds.map(String));
 
-      const available = readyOrders.filter((o) => !assignedSet.has(String(o._id)));
+      const unassigned = readyOrders.filter((o) => !assignedSet.has(String(o._id)));
+
+      // Enrich with restaurant details for pickup info
+      const available = await Promise.all(
+        unassigned.map(async (order) => {
+          const enriched = { ...order };
+          try {
+            const restRes = await axios.get(
+              `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${order.restaurantId}`
+            );
+            enriched.restaurant = restRes.data.data;
+          } catch {}
+          return enriched;
+        })
+      );
 
       return sendResponse(res, 200, true, available, 'Available orders fetched');
     } catch (error) {
@@ -150,7 +164,30 @@ router.get(
         status: { $in: ['assigned', 'picked_up', 'in_transit'] }
       }).sort({ updatedAt: -1 });
 
-      return sendResponse(res, 200, true, deliveries, 'Active deliveries fetched successfully');
+      // Enrich each delivery with full order + restaurant details
+      const enriched = await Promise.all(
+        deliveries.map(async (delivery) => {
+          const d = delivery.toObject();
+          try {
+            const orderRes = await axios.get(
+              `${process.env.ORDER_SERVICE_URL}/orders/${delivery.orderId}`,
+              { headers: { Authorization: req.headers.authorization } }
+            );
+            d.order = orderRes.data.data;
+            if (d.order?.restaurantId) {
+              try {
+                const restRes = await axios.get(
+                  `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${d.order.restaurantId}`
+                );
+                d.restaurant = restRes.data.data;
+              } catch {}
+            }
+          } catch {}
+          return d;
+        })
+      );
+
+      return sendResponse(res, 200, true, enriched, 'Active deliveries fetched successfully');
     } catch (error) {
       next(error);
     }

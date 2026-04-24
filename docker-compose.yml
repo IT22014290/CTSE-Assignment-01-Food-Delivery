@@ -61,6 +61,7 @@ services:
       MONGO_URI: mongodb://mongodb:27017/delivery_db
       AUTH_SERVICE_URL: http://auth-service:3001
       ORDER_SERVICE_URL: http://order-service:3003
+      RESTAURANT_SERVICE_URL: http://restaurant-service:3002
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost
     depends_on:
       - mongodb
