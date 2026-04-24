@@ -58,10 +58,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Warn if Render deploy hook is missing
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND == '' }}
-        run: echo "::warning title=Render deploy skipped::Set repository secret RENDER_DEPLOY_HOOK_FRONTEND to enable frontend deployment."
-
       - name: Deploy to Render
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND != '' }}
-        run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
+        env:
+          RENDER_DEPLOY_HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_FRONTEND" ]; then
+            echo "::warning title=Render deploy skipped::Set repository secret RENDER_DEPLOY_HOOK_FRONTEND to enable frontend deployment."
+            exit 0
+          fi
+          curl -f -X POST "$RENDER_DEPLOY_HOOK_FRONTEND"
