@@ -45,8 +45,10 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-delivery:latest
 
       - name: SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: delivery-service
+          args: >
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
