@@ -10,6 +10,12 @@ const ROLE_OPTIONS = [
     desc: 'Order food from nearby restaurants',
   },
   {
+    value: 'restaurant_owner',
+    icon: '🍽️',
+    title: 'Restaurant Owner',
+    desc: 'Manage your restaurant and menu',
+  },
+  {
     value: 'delivery_driver',
     icon: '🏍️',
     title: 'Delivery Driver',
