@@ -52,3 +52,6 @@ jobs:
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Deploy to Render
+        run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DELIVERY }}"
