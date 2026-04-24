@@ -95,7 +95,7 @@ function DriverDashboardPage() {
   const claimOrder = async (orderId) => {
     setClaiming(orderId);
     try {
-      await api.post('/delivery/assign', { orderId });
+      await api.post('/delivery/claim', { orderId });
       await Promise.all([loadDeliveries(), loadAvailable()]);
       setTab('active');
     } catch {

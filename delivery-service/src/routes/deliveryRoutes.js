@@ -63,6 +63,33 @@ router.post(
   }
 );
 
+router.post(
+  '/delivery/claim',
+  requireAuth,
+  requireRole(['delivery_driver']),
+  validate([body('orderId').isString().notEmpty()]),
+  async (req, res, next) => {
+    try {
+      const { orderId } = req.body;
+
+      const existing = await Delivery.findOne({ orderId });
+      if (existing) {
+        return sendResponse(res, 409, false, {}, 'Order already assigned');
+      }
+
+      const delivery = await Delivery.create({
+        orderId,
+        driverId: req.user.userId,
+        status: 'assigned'
+      });
+
+      return sendResponse(res, 201, true, delivery, 'Order claimed successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 router.get(
   '/delivery/available',
   requireAuth,
