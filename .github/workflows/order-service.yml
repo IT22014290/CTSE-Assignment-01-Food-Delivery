@@ -1,11 +1,14 @@
 name: Order Service CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+      - master
     paths:
       - order-service/**
+      - .github/workflows/order-service.yml
 
 jobs:
   ci-cd:

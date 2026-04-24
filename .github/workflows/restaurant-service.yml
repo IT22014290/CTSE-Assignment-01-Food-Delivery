@@ -1,11 +1,14 @@
 name: Restaurant Service CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+      - master
     paths:
       - restaurant-service/**
+      - .github/workflows/restaurant-service.yml
 
 jobs:
   ci-cd:

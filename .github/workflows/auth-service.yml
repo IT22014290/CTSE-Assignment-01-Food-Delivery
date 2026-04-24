@@ -1,11 +1,14 @@
 name: Auth Service CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+      - master
     paths:
       - auth-service/**
+      - .github/workflows/auth-service.yml
 
 jobs:
   ci-cd:

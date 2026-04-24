@@ -1,11 +1,14 @@
 name: Delivery Service CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+      - master
     paths:
       - delivery-service/**
+      - .github/workflows/delivery-service.yml
 
 jobs:
   ci-cd:
