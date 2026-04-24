@@ -111,6 +111,20 @@ router.get('/orders', requireAuth, async (req, res, next) => {
 });
 
 router.get(
+  '/orders/ready',
+  requireAuth,
+  requireRole(['delivery_driver', 'admin']),
+  async (req, res, next) => {
+    try {
+      const orders = await Order.find({ status: 'ready' }).sort({ createdAt: -1 });
+      return sendResponse(res, 200, true, orders, 'Ready orders fetched successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.get(
   '/orders/restaurant/:restaurantId',
   requireAuth,
   requireRole(['restaurant_owner']),

@@ -13,6 +13,7 @@ function Navbar() {
 
   const navLinks = [
     { to: '/restaurants', label: 'Restaurants' },
+    ...(user?.role === 'customer' ? [{ to: '/my-orders', label: 'My Orders' }] : []),
     ...(user?.role === 'restaurant_owner' ? [{ to: '/owner-dashboard', label: 'My Restaurant' }] : []),
     ...(user?.role === 'delivery_driver' ? [{ to: '/driver-dashboard', label: 'Driver Hub' }] : []),
   ];

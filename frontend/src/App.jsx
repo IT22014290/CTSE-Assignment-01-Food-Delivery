@@ -6,6 +6,7 @@ import RestaurantListPage from './pages/RestaurantListPage';
 import RestaurantDetailPage from './pages/RestaurantDetailPage';
 import CartCheckoutPage from './pages/CartCheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+import MyOrdersPage from './pages/MyOrdersPage';
 import RestaurantDashboardPage from './pages/RestaurantDashboardPage';
 import DriverDashboardPage from './pages/DriverDashboardPage';
 import { useAuth } from './context/AuthContext';
@@ -34,6 +35,14 @@ function App() {
         <Route path="/restaurants" element={<RestaurantListPage />} />
         <Route path="/restaurants/:id" element={<RestaurantDetailPage />} />
         <Route path="/cart" element={<CartCheckoutPage />} />
+        <Route
+          path="/my-orders"
+          element={
+            <ProtectedRoute roles={['customer']}>
+              <MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/track-order/:orderId"
           element={

@@ -39,11 +39,17 @@ router.get('/health', (req, res) => {
 router.post(
   '/delivery/assign',
   requireAuth,
-  requireRole(['admin']),
-  validate([body('orderId').isString().notEmpty(), body('driverId').isString().notEmpty()]),
+  requireRole(['admin', 'delivery_driver']),
+  validate([body('orderId').isString().notEmpty()]),
   async (req, res, next) => {
     try {
-      const { orderId, driverId } = req.body;
+      const { orderId } = req.body;
+      // drivers self-assign; admins can pass an explicit driverId
+      const driverId = req.user.role === 'delivery_driver' ? req.user.userId : req.body.driverId;
+
+      if (!driverId) {
+        return sendResponse(res, 400, false, {}, 'driverId is required');
+      }
 
       const existing = await Delivery.findOne({ orderId });
       if (existing) {
@@ -57,6 +63,30 @@ router.post(
       });
 
       return sendResponse(res, 201, true, delivery, 'Driver assigned successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.get(
+  '/delivery/available',
+  requireAuth,
+  requireRole(['delivery_driver', 'admin']),
+  async (req, res, next) => {
+    try {
+      const ordersRes = await axios.get(
+        `${process.env.ORDER_SERVICE_URL}/orders/ready`,
+        { headers: { Authorization: req.headers.authorization } }
+      );
+      const readyOrders = ordersRes.data.data || [];
+
+      const assignedOrderIds = await Delivery.distinct('orderId');
+      const assignedSet = new Set(assignedOrderIds.map(String));
+
+      const available = readyOrders.filter((o) => !assignedSet.has(String(o._id)));
+
+      return sendResponse(res, 200, true, available, 'Available orders fetched');
     } catch (error) {
       next(error);
     }

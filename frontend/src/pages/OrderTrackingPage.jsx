@@ -31,8 +31,12 @@ function OrderTrackingPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const orderRes = await api.get(`/orders/${orderId}`);
-      setOrder(orderRes.data.data);
+      try {
+        const orderRes = await api.get(`/orders/${orderId}`);
+        setOrder(orderRes.data.data);
+      } catch {
+        // keep last known state
+      }
       try {
         const deliveryRes = await api.get(`/delivery/${orderId}`);
         setDelivery(deliveryRes.data.data);
@@ -43,7 +47,7 @@ function OrderTrackingPage() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 8000);
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [orderId]);
 

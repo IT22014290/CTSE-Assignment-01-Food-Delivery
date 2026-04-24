@@ -36,10 +36,14 @@ function RestaurantDashboardPage() {
   const [createError, setCreateError] = useState('');
 
   const loadRestaurants = async () => {
-    const res = await api.get('/restaurants');
-    const mine = res.data.data.filter((r) => r.ownerId === user?.id);
-    setRestaurants(mine);
-    if (mine.length > 0) setSelected(mine[0]._id);
+    try {
+      const res = await api.get('/restaurants');
+      const mine = res.data.data.filter((r) => r.ownerId === user?.id);
+      setRestaurants(mine);
+      if (mine.length > 0) setSelected((prev) => prev || mine[0]._id);
+    } catch {
+      // keep existing state
+    }
   };
 
   useEffect(() => {
@@ -47,12 +51,18 @@ function RestaurantDashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!selected) return;
     const loadOrders = async () => {
-      if (!selected) return;
-      const res = await api.get(`/orders/restaurant/${selected}`);
-      setOrders(res.data.data);
+      try {
+        const res = await api.get(`/orders/restaurant/${selected}`);
+        setOrders(res.data.data);
+      } catch {
+        // keep last known state
+      }
     };
     loadOrders();
+    const interval = setInterval(loadOrders, 8000);
+    return () => clearInterval(interval);
   }, [selected]);
 
   const createRestaurant = async (e) => {
@@ -258,7 +268,13 @@ function RestaurantDashboardPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-white">Order #{order._id.slice(-8).toUpperCase()}</p>
-                    <div className="mt-1"><StatusBadge status={order.status} /></div>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {order.items?.map((i) => `${i.quantity}× ${i.name}`).join(', ')}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <StatusBadge status={order.status} />
+                      <span className="text-xs text-slate-500">${order.totalAmount?.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

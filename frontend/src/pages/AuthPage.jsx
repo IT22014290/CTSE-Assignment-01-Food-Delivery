@@ -38,12 +38,16 @@ function AuthPage() {
     setError('');
     setLoading(true);
     try {
+      let result;
       if (mode === 'login') {
-        await login(form.email, form.password);
+        result = await login(form.email, form.password);
       } else {
-        await register(form);
+        result = await register(form);
       }
-      navigate('/restaurants');
+      const role = result?.data?.user?.role;
+      if (role === 'restaurant_owner') navigate('/owner-dashboard');
+      else if (role === 'delivery_driver') navigate('/driver-dashboard');
+      else navigate('/restaurants');
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed. Please try again.');
     } finally {
