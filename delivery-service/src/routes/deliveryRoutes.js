@@ -39,17 +39,11 @@ router.get('/health', (req, res) => {
 router.post(
   '/delivery/assign',
   requireAuth,
-  requireRole(['admin', 'delivery_driver']),
-  validate([body('orderId').isString().notEmpty()]),
+  requireRole(['admin']),
+  validate([body('orderId').isString().notEmpty(), body('driverId').isString().notEmpty()]),
   async (req, res, next) => {
     try {
-      const { orderId } = req.body;
-      // drivers self-assign; admins can pass an explicit driverId
-      const driverId = req.user.role === 'delivery_driver' ? req.user.userId : req.body.driverId;
-
-      if (!driverId) {
-        return sendResponse(res, 400, false, {}, 'driverId is required');
-      }
+      const { orderId, driverId } = req.body;
 
       const existing = await Delivery.findOne({ orderId });
       if (existing) {
