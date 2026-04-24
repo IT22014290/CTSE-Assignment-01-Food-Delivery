@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const DELIVERY_FEE = 2.99;
@@ -8,6 +9,7 @@ const SERVICE_FEE = 0.99;
 
 function CartCheckoutPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, removeFromCart, clearCart, cartTotal } = useCart();
   const [error, setError] = useState('');
   const [placing, setPlacing] = useState(false);
@@ -17,6 +19,16 @@ function CartCheckoutPage() {
 
   const placeOrder = async () => {
     setError('');
+
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    if (user.role !== 'customer') {
+      setError(`Only customer accounts can place orders. You are logged in as "${user.role.replace('_', ' ')}". Please log in with a customer account.`);
+      return;
+    }
 
     if (items.length === 0) {
       setError('Your cart is empty.');
@@ -70,6 +82,41 @@ function CartCheckoutPage() {
         <h1 className="font-display text-4xl font-black text-white">Your Cart</h1>
         <p className="mt-1 text-slate-400">{items.length} item{items.length !== 1 ? 's' : ''} ready to order</p>
       </div>
+
+      {/* Role warning banner */}
+      {user && user.role !== 'customer' && (
+        <div
+          className="mb-6 flex items-start gap-3 rounded-2xl p-4 text-sm"
+          style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}
+        >
+          <span className="text-xl">⚠️</span>
+          <div>
+            <p className="font-bold">You are logged in as a {user.role.replace('_', ' ')}</p>
+            <p className="mt-1 text-amber-300/80">
+              Only <strong>customer</strong> accounts can place orders.{' '}
+              <Link to="/auth" className="underline font-semibold text-amber-300">
+                Sign in with a customer account →
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Not logged in warning */}
+      {!user && (
+        <div
+          className="mb-6 flex items-start gap-3 rounded-2xl p-4 text-sm"
+          style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#93c5fd' }}
+        >
+          <span className="text-xl">🔒</span>
+          <div>
+            <p className="font-bold">You need to sign in to place an order</p>
+            <p className="mt-1">
+              <Link to="/auth" className="underline font-semibold">Sign in or create an account →</Link>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -192,9 +239,9 @@ function CartCheckoutPage() {
               <button
                 type="button"
                 onClick={placeOrder}
-                disabled={placing}
+                disabled={placing || (user && user.role !== 'customer')}
                 className="btn-primary w-full"
-                style={{ padding: '1rem', fontSize: '1rem', opacity: placing ? 0.7 : 1 }}
+                style={{ padding: '1rem', fontSize: '1rem', opacity: (placing || (user && user.role !== 'customer')) ? 0.5 : 1 }}
               >
                 {placing ? (
                   <span className="flex items-center justify-center gap-2">
@@ -203,6 +250,8 @@ function CartCheckoutPage() {
                     </svg>
                     Placing your order…
                   </span>
+                ) : user && user.role !== 'customer' ? (
+                  'Customer account required'
                 ) : (
                   `Place Order · $${total.toFixed(2)}`
                 )}

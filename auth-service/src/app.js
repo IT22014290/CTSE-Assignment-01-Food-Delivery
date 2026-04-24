@@ -11,6 +11,9 @@ const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Trust the nginx reverse proxy so req.ip is the real client IP, not the proxy IP
+app.set('trust proxy', 1);
+
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',');
 
 app.use(helmet({ contentSecurityPolicy: false }));
