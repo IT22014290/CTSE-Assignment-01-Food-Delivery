@@ -8,6 +8,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: http://food-delivery-alb-1472569199.eu-north-1.elb.amazonaws.com
+    description: AWS ECS via Application Load Balancer
   - url: https://food-delivery-delivery-l0eu.onrender.com
     description: Render (production)
   - url: http://localhost:3004

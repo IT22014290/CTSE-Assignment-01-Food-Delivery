@@ -31,18 +31,30 @@ jobs:
         working-directory: delivery-service
         run: npm test
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./delivery-service
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-delivery:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/food-delivery-delivery:latest
+            595260679779.dkr.ecr.eu-north-1.amazonaws.com/food-delivery-delivery:latest
 
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v5
@@ -55,3 +67,11 @@ jobs:
 
       - name: Deploy to Render
         run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DELIVERY }}"
+
+      - name: Deploy to Amazon ECS
+        run: |
+          aws ecs update-service \
+            --cluster food-delivery-cluster1 \
+            --service food-delivery-delivery \
+            --force-new-deployment \
+            --region eu-north-1
