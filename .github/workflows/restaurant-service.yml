@@ -35,11 +35,10 @@ jobs:
         run: docker push ${{ secrets.ECR_REGISTRY }}/food-delivery-restaurant:latest
 
       - name: Update ECS service
-        continue-on-error: true
         run: |
           aws ecs update-service \
-            --cluster food-delivery-cluster \
-            --service restaurant-service \
+            --cluster food-delivery-cluster1 \
+            --service food-delivery-restaurant \
             --force-new-deployment \
             --region ${{ secrets.AWS_REGION }}
 
