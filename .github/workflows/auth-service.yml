@@ -26,13 +26,14 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.ECR_REGISTRY }}/food-delivery-auth:latest ./auth-service
+        run: docker build -t ${{ steps.login-ecr.outputs.registry }}/food-delivery-auth:latest ./auth-service
 
       - name: Push to ECR
-        run: docker push ${{ secrets.ECR_REGISTRY }}/food-delivery-auth:latest
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/food-delivery-auth:latest
 
       - name: Update ECS service
         run: |
