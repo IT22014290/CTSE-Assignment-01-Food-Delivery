@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
+
+// Moves the map viewport whenever the driver's coordinates change
+function MapPanner({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], map.getZoom(), { animate: true, duration: 1 });
+  }, [lat, lng]);
+  return null;
+}
 
 const driverIcon = L.divIcon({
   html: `<div style="
@@ -101,7 +110,7 @@ function OrderTrackingPage() {
             >
               <div>
                 <h2 className="font-display text-lg font-bold text-white">Driver Location</h2>
-                <p className="text-xs text-slate-500">Updates every 8 seconds</p>
+                <p className="text-xs text-slate-500">Updates every 5 seconds</p>
               </div>
               {coords?.latitude && (
                 <div className="flex items-center gap-2">
@@ -121,6 +130,7 @@ function OrderTrackingPage() {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <MapPanner lat={coords.latitude} lng={coords.longitude} />
                 <Marker position={[coords.latitude, coords.longitude]} icon={driverIcon}>
                   <Popup>
                     <div style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600 }}>
