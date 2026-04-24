@@ -37,7 +37,7 @@ function RestaurantDashboardPage() {
 
   const loadRestaurants = async () => {
     const res = await api.get('/restaurants');
-    const mine = res.data.data.filter((r) => r.ownerId === user?.userId);
+    const mine = res.data.data.filter((r) => r.ownerId === user?.id);
     setRestaurants(mine);
     if (mine.length > 0) setSelected(mine[0]._id);
   };
