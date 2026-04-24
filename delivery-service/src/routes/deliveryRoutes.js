@@ -17,15 +17,17 @@ const validate = (validations) => async (req, res, next) => {
   next();
 };
 
-function isValidId(id) {
-  return typeof id === 'string' && mongoose.Types.ObjectId.isValid(id);
+function sanitizeId(id) {
+  if (typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) return null;
+  return new mongoose.Types.ObjectId(id).toHexString();
 }
 
 async function updateOrderStatus(orderId, authHeader, status) {
-  if (!isValidId(orderId)) return;
+  const safeId = sanitizeId(orderId);
+  if (!safeId) return;
   try {
     await axios.put(
-      `${process.env.ORDER_SERVICE_URL}/orders/${orderId}/status`,
+      `${process.env.ORDER_SERVICE_URL}/orders/${safeId}/status`,
       { status },
       {
         headers: {
@@ -51,17 +53,18 @@ router.post(
     try {
       const { orderId, driverId } = req.body;
 
-      if (!isValidId(orderId)) {
+      const safeOrderId = sanitizeId(orderId);
+      if (!safeOrderId) {
         return sendResponse(res, 400, false, {}, 'Invalid order ID');
       }
 
-      const existing = await Delivery.findOne({ orderId });
+      const existing = await Delivery.findOne({ orderId: safeOrderId });
       if (existing) {
         return sendResponse(res, 409, false, {}, 'Order already assigned');
       }
 
       const delivery = await Delivery.create({
-        orderId,
+        orderId: safeOrderId,
         driverId,
         status: 'assigned'
       });
@@ -82,17 +85,18 @@ router.post(
     try {
       const { orderId } = req.body;
 
-      if (!isValidId(orderId)) {
+      const safeOrderId = sanitizeId(orderId);
+      if (!safeOrderId) {
         return sendResponse(res, 400, false, {}, 'Invalid order ID');
       }
 
-      const existing = await Delivery.findOne({ orderId });
+      const existing = await Delivery.findOne({ orderId: safeOrderId });
       if (existing) {
         return sendResponse(res, 409, false, {}, 'Order already assigned');
       }
 
       const delivery = await Delivery.create({
-        orderId,
+        orderId: safeOrderId,
         driverId: req.user.userId,
         status: 'assigned'
       });
@@ -125,9 +129,10 @@ router.get(
         unassigned.map(async (order) => {
           const enriched = { ...order };
           try {
-            if (isValidId(order.restaurantId)) {
+            const safeRestaurantId = sanitizeId(order.restaurantId);
+            if (safeRestaurantId) {
               const restRes = await axios.get(
-                `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${order.restaurantId}`
+                `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${safeRestaurantId}`
               );
               enriched.restaurant = restRes.data.data;
             }
@@ -157,11 +162,12 @@ router.put(
       const { latitude, longitude, status } = req.body;
       const { orderId } = req.params;
 
-      if (!isValidId(orderId)) {
+      const safeOrderId = sanitizeId(orderId);
+      if (!safeOrderId) {
         return sendResponse(res, 400, false, {}, 'Invalid order ID');
       }
 
-      const delivery = await Delivery.findOne({ orderId, driverId: req.user.userId });
+      const delivery = await Delivery.findOne({ orderId: safeOrderId, driverId: req.user.userId });
 
       if (!delivery) {
         return sendResponse(res, 404, false, {}, 'Active delivery not found');
@@ -180,11 +186,11 @@ router.put(
       await delivery.save();
 
       if (status === 'picked_up') {
-        await updateOrderStatus(orderId, req.headers.authorization, 'picked_up');
+        await updateOrderStatus(safeOrderId, req.headers.authorization, 'picked_up');
       }
 
       if (status === 'delivered') {
-        await updateOrderStatus(orderId, req.headers.authorization, 'delivered');
+        await updateOrderStatus(safeOrderId, req.headers.authorization, 'delivered');
       }
 
       return sendResponse(res, 200, true, delivery, 'Delivery location updated');
@@ -209,16 +215,18 @@ router.get(
         deliveries.map(async (delivery) => {
           const d = delivery.toObject();
           try {
-            if (isValidId(delivery.orderId)) {
+            const safeDeliveryOrderId = sanitizeId(delivery.orderId);
+            if (safeDeliveryOrderId) {
               const orderRes = await axios.get(
-                `${process.env.ORDER_SERVICE_URL}/orders/${delivery.orderId}`,
+                `${process.env.ORDER_SERVICE_URL}/orders/${safeDeliveryOrderId}`,
                 { headers: { Authorization: req.headers.authorization } }
               );
               d.order = orderRes.data.data;
-              if (d.order?.restaurantId && isValidId(d.order.restaurantId)) {
+              const safeRestId = sanitizeId(d.order?.restaurantId);
+              if (safeRestId) {
                 try {
                   const restRes = await axios.get(
-                    `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${d.order.restaurantId}`
+                    `${process.env.RESTAURANT_SERVICE_URL}/restaurants/${safeRestId}`
                   );
                   d.restaurant = restRes.data.data;
                 } catch {}
@@ -240,11 +248,12 @@ router.get('/delivery/:orderId', async (req, res, next) => {
   try {
     const { orderId } = req.params;
 
-    if (!isValidId(orderId)) {
+    const safeOrderId = sanitizeId(orderId);
+    if (!safeOrderId) {
       return sendResponse(res, 400, false, {}, 'Invalid order ID');
     }
 
-    const delivery = await Delivery.findOne({ orderId });
+    const delivery = await Delivery.findOne({ orderId: safeOrderId });
 
     if (!delivery) {
       return sendResponse(res, 404, false, {}, 'Delivery record not found');
