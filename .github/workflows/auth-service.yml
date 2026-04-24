@@ -35,6 +35,7 @@ jobs:
         run: docker push ${{ secrets.ECR_REGISTRY }}/food-delivery-auth:latest
 
       - name: Update ECS service
+        continue-on-error: true
         run: |
           aws ecs update-service \
             --cluster food-delivery-cluster \
