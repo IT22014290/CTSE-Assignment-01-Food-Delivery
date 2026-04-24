@@ -160,4 +160,3 @@ Required GitHub secrets:
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_TOKEN`
 
-End.
