@@ -45,11 +45,16 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest
 
       - name: SonarCloud scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: frontend
           args: >
+            -Dsonar.projectKey=food-delivery-frontend
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=src/test
+            -Dsonar.test.inclusions=src/test/**/*.test.jsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
