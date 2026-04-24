@@ -8,6 +8,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://food-delivery-order-6hzh.onrender.com
+    description: Render (production)
   - url: http://localhost:3003
     description: Local development
   - url: http://localhost/api/orders

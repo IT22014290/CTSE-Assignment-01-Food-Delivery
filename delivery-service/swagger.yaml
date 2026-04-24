@@ -8,6 +8,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://food-delivery-delivery-l0eu.onrender.com
+    description: Render (production)
   - url: http://localhost:3004
     description: Local development
   - url: http://localhost/api/delivery

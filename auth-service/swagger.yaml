@@ -9,6 +9,8 @@ info:
     name: QuickBite Team
 
 servers:
+  - url: https://food-delivery-auth-bcvn.onrender.com
+    description: Render (production)
   - url: http://localhost:3001
     description: Local development
   - url: http://localhost/api/auth

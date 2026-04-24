@@ -7,6 +7,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://food-delivery-restaurant.onrender.com
+    description: Render (production)
   - url: http://localhost:3002
     description: Local development
   - url: http://localhost/api/restaurants
