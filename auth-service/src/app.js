@@ -29,3 +29,4 @@ app.use('/', authRoutes);
 app.use(errorHandler);
 
 module.exports = app;
+

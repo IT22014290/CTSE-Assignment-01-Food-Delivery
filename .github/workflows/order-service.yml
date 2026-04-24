@@ -15,18 +15,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and push to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/food-delivery-order:latest ./order-service
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/food-delivery-order:latest
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build and push to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+            docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          docker build -t ${{ secrets.ECR_REGISTRY }}/food-delivery-order:latest ./order-service
+          docker push ${{ secrets.ECR_REGISTRY }}/food-delivery-order:latest
 
       - name: Update ECS service
         run: |
