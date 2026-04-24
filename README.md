@@ -140,24 +140,40 @@ npm run seed
 
 ## CI/CD Workflows
 
-Each backend service includes a dedicated GitHub Actions workflow in `.github/workflows/`:
+This repository uses Docker Hub + Render deployment only.
+
+GitHub Actions workflows in `.github/workflows/`:
 
 - `auth-service.yml`
 - `restaurant-service.yml`
 - `order-service.yml`
 - `delivery-service.yml`
+- `frontend-service.yml`
 
-Each workflow runs on push to `main` and executes:
+Each workflow runs on push to `main` or `master` for its own service path and executes:
 
 1. Checkout code
-2. Run service tests (`npm test`)
-3. Build Docker image
-4. Push image to Docker Hub
-5. Deployment placeholder step for cloud commands
+2. Install dependencies
+3. Run tests
+4. Build and push Docker image to Docker Hub
+5. Run SonarCloud scan
+6. Trigger Render deploy hook
 
 Required GitHub secrets:
 
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
+- `SONAR_TOKEN`
+- `SONAR_ORGANIZATION`
+- `RENDER_DEPLOY_HOOK_AUTH`
+- `RENDER_DEPLOY_HOOK_RESTAURANT`
+- `RENDER_DEPLOY_HOOK_ORDER`
+- `RENDER_DEPLOY_HOOK_DELIVERY`
+- `RENDER_DEPLOY_HOOK_FRONTEND`
 
-Test
+## Deployment Target
+
+Production target is Render using Docker Hub images.
+
+- No AWS ECR pipelines are used in this repository.
+- No AWS ECS deployment workflows are used in this repository.
