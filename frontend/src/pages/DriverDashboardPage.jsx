@@ -78,7 +78,14 @@ function DriverDashboardPage() {
   }, []);
 
   const detectLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      alert('Auto-detect requires HTTPS. Please enter coordinates manually, or use the Render URL (HTTPS) for this feature.');
+      return;
+    }
     setAutoGps(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -88,7 +95,10 @@ function DriverDashboardPage() {
         });
         setAutoGps(false);
       },
-      () => setAutoGps(false)
+      (err) => {
+        setAutoGps(false);
+        alert(`Location access denied. Please enter coordinates manually. (${err.message})`);
+      }
     );
   };
 
